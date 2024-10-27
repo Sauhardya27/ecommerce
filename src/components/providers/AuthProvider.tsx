@@ -1,4 +1,5 @@
 "use client";
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(true);
           setUser(JSON.parse(storedUser));
         } catch (error) {
+          console.error('Error parsing stored user:', error);
           Cookies.remove('authToken');
           localStorage.removeItem('user');
         }
@@ -47,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (token: string, userData: User) => {
     try {
-      Cookies.set('authToken', token, { 
+      Cookies.set('authToken', token, {
         expires: 1,
         sameSite: 'strict',
         secure: process.env.NODE_ENV === 'production'
@@ -72,22 +74,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
 
+  const contextValue: AuthContextType = {
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    isLoading
+  };
+
   return (
-    <AuthContext.Provider 
-      value={{
-        isAuthenticated,
-        user,
-        login,
-        logout,
-        isLoading
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

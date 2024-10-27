@@ -2,9 +2,19 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface ApiError extends Error {
+  message: string;
+}
+
 const SignUp: React.FC = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     password: '',
@@ -38,8 +48,9 @@ const SignUp: React.FC = () => {
 
       setUserId(data.userId);
       setIsOtpView(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setError(apiError.message);
     } finally {
       setLoading(false);
     }
@@ -99,8 +110,9 @@ const SignUp: React.FC = () => {
       }
 
       router.push('/login');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setError(apiError.message);
     } finally {
       setLoading(false);
     }

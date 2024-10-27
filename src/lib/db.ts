@@ -3,14 +3,16 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
-declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+declare global {
+  var mongoose: MongooseCache | undefined;
+}
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -18,18 +20,16 @@ if (!MONGODB_URI) {
   );
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+const cached: MongooseCache = global.mongoose || {
+  conn: null,
+  promise: null,
+};
+
+if (!global.mongoose) {
+  global.mongoose = cached;
 }
 
-let cached = global.mongoose as MongooseCache;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-async function dbConnect() {
+async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
@@ -37,21 +37,61 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    try {
+      cached.promise = mongoose
+        .connect(MONGODB_URI!, opts)
+        .then((mongoose) => {
+          console.log('MongoDB connected successfully');
+          return mongoose;
+        })
+        .catch((error) => {
+          console.error('MongoDB connection error:', error);
+          cached.promise = null;
+          throw error;
+        });
+    } catch (error) {
+      console.error('Error initiating MongoDB connection:', error);
+      cached.promise = null;
+      throw error;
+    }
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+    return cached.conn;
+  } catch (error) {
     cached.promise = null;
-    throw e;
+    console.error('Error establishing MongoDB connection:', error);
+    throw error;
   }
-
-  return cached.conn;
 }
+
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connection established');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB connection disconnected');
+});
+
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed through app termination');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error closing MongoDB connection:', err);
+    process.exit(1);
+  }
+});
 
 export default dbConnect;

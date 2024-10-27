@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { User, UserOTPVerification } from '@/lib/models';
 import bcrypt from 'bcryptjs';
-import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 
 const transporter = nodemailer.createTransport({
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedOTP = await bcrypt.hash(otp, 10);
 
-    const newOTPVerification = await UserOTPVerification.create({
+    await UserOTPVerification.create({
       userId: newUser._id,
       otp: hashedOTP,
       createdAt: new Date(),

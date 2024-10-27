@@ -4,10 +4,19 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Link from 'next/link';
 
+interface FormData {
+  email: string;
+  password: string;
+}
+
+interface LoginError extends Error {
+  message: string;
+}
+
 const Login = () => {
   const router = useRouter();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     password: ''
   });
@@ -37,8 +46,9 @@ const Login = () => {
   
       login(data.token, data.user);
       router.push('/');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const loginError = err as LoginError;
+      setError(loginError.message);
     } finally {
       setLoading(false);
     }
@@ -119,7 +129,7 @@ const Login = () => {
           </form>
 
           <div className="text-center text-sm">
-            Don't have an Account?{' '}
+            Don&apos;t have an Account?{' '}
             <Link href="/signup" className="text-black font-semibold hover:underline">
               SIGN UP
             </Link>
