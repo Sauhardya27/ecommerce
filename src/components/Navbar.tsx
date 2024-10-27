@@ -70,7 +70,9 @@ const Navbar: React.FC = () => {
         <div className="container mx-auto px-8">
           <div className="flex items-center justify-between h-16">
             <div className="text-3xl font-bold">
-              ECOMMERCE
+              <a href="/" className="hover:text-gray-700 transition-colors">
+                ECOMMERCE
+              </a>
             </div>
 
             {/* Navigation Links */}
