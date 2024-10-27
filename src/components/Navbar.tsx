@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from './providers/AuthProvider';
+import Link from 'next/link';
 
 const carouselMessages: string[] = [
   "Get 10% off on business sign up",
@@ -70,9 +71,9 @@ const Navbar: React.FC = () => {
         <div className="container mx-auto px-8">
           <div className="flex items-center justify-between h-16">
             <div className="text-3xl font-bold">
-              <a href="/" className="hover:text-gray-700 transition-colors">
+              <Link href="/" className="hover:text-gray-700 transition-colors">
                 ECOMMERCE
-              </a>
+              </Link>
             </div>
 
             {/* Navigation Links */}
