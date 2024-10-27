@@ -8,6 +8,7 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null;
 }
 
+// eslint-disable-next-line no-var
 declare global {
   var mongoose: MongooseCache | undefined;
 }
@@ -20,13 +21,13 @@ if (!MONGODB_URI) {
   );
 }
 
-const cached: MongooseCache = global.mongoose || {
+let cached: MongooseCache = (global as any).mongoose || {
   conn: null,
   promise: null,
 };
 
-if (!global.mongoose) {
-  global.mongoose = cached;
+if (!(global as any).mongoose) {
+  (global as any).mongoose = cached;
 }
 
 async function dbConnect(): Promise<typeof mongoose> {
@@ -49,7 +50,7 @@ async function dbConnect(): Promise<typeof mongoose> {
           console.log('MongoDB connected successfully');
           return mongoose;
         })
-        .catch((error) => {
+        .catch((error: Error) => {
           console.error('MongoDB connection error:', error);
           cached.promise = null;
           throw error;
